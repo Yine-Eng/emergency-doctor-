@@ -1,10 +1,11 @@
 import PasswordInput from '@/components/PasswordInput';
 import PrimaryButton from '@/components/PrimaryButton';
+import { API_ENDPOINTS } from '@/constants/ApiConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { globalStyles } from '@/styles/globalStyles';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -26,7 +27,6 @@ export default function SignIn() {
 
     const [rememberMe, setRememberMe] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (field: string, value: string) => {
         setForm({ ...form, [field]: value });
@@ -45,16 +45,26 @@ export default function SignIn() {
         if (!validate()) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/login', {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const res = await fetch(API_ENDPOINTS.LOGIN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     phone: form.emailOrPhone,
                     password: form.password,
                 }),
+                signal: controller.signal,
             });
 
+            clearTimeout(timeoutId);
+
+            console.log('Response status:', res.status);
+            console.log('Response ok:', res.ok);
+
             const data = await res.json();
+            console.log('Response data:', data);
 
             if (res.ok) {
                 if (data.accessToken && data.refreshToken) {
@@ -63,11 +73,16 @@ export default function SignIn() {
                 }
                 router.replace('/Home');
             } else {
+                console.log('Showing backend error:', data.message);
                 alert(data.message || 'Login failed');
             }
         } catch (err) {
-            console.error(err);
-            alert('Something went wrong');
+            console.error('Network error:', err);
+            if (err instanceof Error && err.name === 'AbortError') {
+                alert('Connection timeout. Please check if the server is running.');
+            } else {
+                alert('Unable to connect to server. Please check your connection.');
+            }
         }
     };
 

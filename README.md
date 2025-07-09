@@ -1,50 +1,82 @@
-# Welcome to your Expo app 👋
+# 🩺 Emergency Doctor
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Emergency Doctor** is a free, cross-platform mobile application built with React Native and backed by a secure Node.js + Express + MongoDB backend. It is designed to **assist users in emergencies**, provide **first aid guidance**, enable **quick emergency reporting**, and support **secure medical profile access** — even from a locked screen.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚨 What It Solves
 
-   ```bash
-   npm install
-   ```
+- 📍 **Injury Identification:** Users can select body parts on a diagram to report injuries quickly.
+- 📄 **Automatic Report Generation:** The app generates a report that can be shared with emergency contacts or doctors.
+- 👩‍⚕️ **First Aid Education:** Offers professional, reliable first-aid steps for common emergencies.
+- 🧠 **Medical History on Lock Screen:** Allows optional viewing of critical medical data (e.g. allergies, blood type) from the lock screen.
+- 📞 **Emergency Contact Notifications:** Sends messages to pre-selected contacts during alerts.
+- 📡 **Disaster Alerts & Forecasting:** Receives AI-powered weather or disaster predictions and sends preemptive warnings.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🔐 Core Features (Security & UX First)
 
-In the output, you'll find options to open the app in a
+- Secure **user authentication and role-based authorization**
+- 🧠 Intelligent UI with **dark/light themes**
+- ✍️ Users can **add notes**, update **emergency contacts**, and mark **favorites**
+- ⛑️ Designed to work **offline after initial setup** (coming soon)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 🧱 Technologies Used
 
-## Get a fresh project
+### Frontend
+- **React Native (Expo)** with Tailwind CSS v4 (via `nativewind`)
+- **Firebase (optional)** for push notifications / SMS 2FA
+- **Capacitor Ready** for future web + desktop deployment
 
-When you're ready, run:
+### Backend
+- **Node.js + Express**
+- **MongoDB (Atlas)**
+- **JWT for Token Auth**, `helmet`, `cors`, `rate-limit` middleware
+- Role-based access control (admin, doctor, user, guest)
+- Rate-limited login with anomaly detection (coming)
 
-```bash
-npm run reset-project
-```
+---
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 👥 Team
 
-## Learn more
+- **Sampson Anaba** – Project Lead, Full Stack Developer
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 🧭 Goals & Vision
 
-## Join the community
+We aim to make **lifesaving care more accessible**, especially for vulnerable groups, travelers, and individuals who may not have immediate access to healthcare. This app is inspired by real-world emergency gaps and seeks to:
 
-Join our community of developers creating universal apps.
+- Improve emergency communication
+- Offer real-time, **device-native support**
+- Educate users while respecting privacy and cost
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## ❓ Questions This App Answers
+
+- "What first aid should I apply before help arrives?"
+- "How can I quickly notify someone I'm in danger?"
+- "What if I can't speak but need to alert someone?"
+- "How can emergency responders know my condition from my lock screen?"
+
+---
+
+## 🛡️ Considerations & Philosophy
+
+- All user inputs are treated as **potentially malicious**
+- Authentication errors are **non-descriptive** to prevent info leakage
+- App performance is optimized for **low-end devices**
+- **Free forever** — no ads, no subscriptions (planned)
+
+---
+
+## 💡 Inspiration
+
+- Stories of delayed emergency care
+- The lack of professional, free first-aid apps with real utility
+- A vision to bring modern design and security-first engineering to humanitarian problems
+- 

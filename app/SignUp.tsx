@@ -1,9 +1,11 @@
 import PasswordInput from '@/components/PasswordInput';
 import PrimaryButton from '@/components/PrimaryButton';
+import { API_ENDPOINTS } from '@/constants/ApiConfig';
+import { useAuth } from '@/contexts/AuthContext';
 import { globalStyles } from '@/styles/globalStyles';
 import Checkbox from 'expo-checkbox';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -16,6 +18,7 @@ import {
 
 export default function SignUp() {
     const router = useRouter();
+    const { login, setUser } = useAuth();
 
     const [form, setForm] = useState({
         fullName: '',
@@ -37,17 +40,57 @@ export default function SignUp() {
         const newErrors: typeof errors = {};
         if (!form.fullName.trim()) newErrors.fullName = 'Full name is required';
         if (!form.phone.trim()) newErrors.phone = 'Phone number is required';
+        
+        if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+            newErrors.email = 'Please enter a valid email address';
+        }
+        
         if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
         if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSignUp = () => {
+    const handleSignUp = async () => {
         if (!validate()) return;
 
-        console.log('🚀 Secure Sign-Up:', form, 'Remember Me:', rememberMe);
-        router.replace('/Home');
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const res = await fetch(API_ENDPOINTS.SIGNUP, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullName: form.fullName,
+                    phone: form.phone,
+                    email: form.email,
+                    password: form.password,
+                }),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (data.accessToken && data.refreshToken) {
+                    await login(data.accessToken, data.refreshToken, rememberMe);
+                    setUser(data.user);
+                }
+                router.replace('/Home');
+            } else {
+                alert(data.message || 'Signup failed');
+            }
+        } catch (err) {
+            console.error('Network error:', err);
+            if (err instanceof Error && err.name === 'AbortError') {
+                alert('Connection timeout. Please check if the server is running.');
+            } else {
+                alert('Unable to connect to server. Please check your connection.');
+            }
+        }
     };
 
     return (
@@ -88,6 +131,7 @@ export default function SignUp() {
                     value={form.email}
                     onChangeText={(text) => handleChange('email', text)}
                 />
+                {errors.email && <Text style={globalStyles.errorText}>{errors.email}</Text>}
 
                 {/* Password */}
                 <PasswordInput
@@ -105,8 +149,7 @@ export default function SignUp() {
                     value={form.confirmPassword}
                     onChangeText={(text) => handleChange('confirmPassword', text)}
                     error={errors.confirmPassword}
-                />  
-                {errors.confirmPassword && <Text style={globalStyles.errorText}>{errors.confirmPassword}</Text>}
+                />
 
                 {/* Remember Me */}
                 <View style={globalStyles.checkboxContainer}>

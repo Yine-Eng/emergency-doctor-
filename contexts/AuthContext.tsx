@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from '@/constants/ApiConfig';
 import * as SecureStore from 'expo-secure-store';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
@@ -43,7 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!storedRefreshToken) return;
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/refresh-token', {
+            const res = await fetch(API_ENDPOINTS.REFRESH_TOKEN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ refreshToken: storedRefreshToken }),
