@@ -79,7 +79,7 @@ export default function SignUp() {
                     await login(data.accessToken, data.refreshToken, rememberMe);
                     setUser(data.user);
                 }
-                router.replace('/Home');
+                router.replace('/tabs' as any);
             } else {
                 alert(data.message || 'Signup failed');
             }

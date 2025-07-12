@@ -71,7 +71,7 @@ export default function SignIn() {
                     await login(data.accessToken, data.refreshToken, rememberMe);
                     setUser(data.user);
                 }
-                router.replace('/Home');
+                router.replace('/tabs' as any);
             } else {
                 console.log('Showing backend error:', data.message);
                 alert(data.message || 'Login failed');
@@ -130,7 +130,7 @@ export default function SignIn() {
                 {/* Sign Up Link */}
                 <TouchableOpacity onPress={() => router.replace('/SignUp')}>
                     <Text style={globalStyles.linkContainer}>
-                        Don’t have an account? <Text style={globalStyles.linkText}>Sign Up</Text>
+                        Don't have an account? <Text style={globalStyles.linkText}>Sign Up</Text>
                     </Text>
                 </TouchableOpacity>
             </ScrollView>
