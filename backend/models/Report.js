@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const reportSchema = new mongoose.Schema({
     userId: {
@@ -14,7 +14,7 @@ const reportSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
-    selectedBodyParts: {
+    bodyParts: {
         type: [String],
         default: [],
     },
@@ -23,11 +23,11 @@ const reportSchema = new mongoose.Schema({
         lng: Number,
         address: String,
     },
-    voiceNoteUrl: {
+    voiceNote: {
         type: String,
         default: null,
     },
-    mediaUrls: {
+    media: {
         type: [String],
         default: [],
     },
@@ -54,4 +54,4 @@ const reportSchema = new mongoose.Schema({
     },
 });
 
-module.exports = mongoose.model("Report", reportSchema);
+export default mongoose.model("Report", reportSchema);
