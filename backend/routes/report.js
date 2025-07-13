@@ -4,9 +4,6 @@ import Report from "../models/Report";
 
 const router = express.Router();
 
-// @route   POST /api/reports
-// @desc    Save a new emergency report (draft or submitted)
-// @access  Private
 router.post("/", verifyToken, async (req, res) => {
     try {
         const {
@@ -44,9 +41,6 @@ router.post("/", verifyToken, async (req, res) => {
     }
 });
 
-// @route   GET /api/reports
-// @desc    Get all reports for the authenticated user
-// @access  Private
 router.get("/", verifyToken, async (req, res) => {
     try {
         const reports = await Report.find({ userId: req.user.id }).sort({
@@ -59,9 +53,6 @@ router.get("/", verifyToken, async (req, res) => {
     }
 });
 
-// @route   GET /api/reports/:id
-// @desc    Get a single report by ID
-// @access  Private
 router.get("/:id", verifyToken, async (req, res) => {
     try {
         const report = await Report.findOne({
@@ -77,9 +68,6 @@ router.get("/:id", verifyToken, async (req, res) => {
     }
 });
 
-// @route   PUT /api/reports/:id
-// @desc    Update a report
-// @access  Private
 router.put("/:id", verifyToken, async (req, res) => {
     try {
         const updated = await Report.findOneAndUpdate(
@@ -96,9 +84,6 @@ router.put("/:id", verifyToken, async (req, res) => {
     }
 });
 
-// @route   DELETE /api/reports/:id
-// @desc    Delete a report
-// @access  Private
 router.delete("/:id", verifyToken, async (req, res) => {
     try {
         const deleted = await Report.findOneAndDelete({
