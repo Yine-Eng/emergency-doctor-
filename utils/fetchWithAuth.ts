@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { API_BASE_URL } from "../constants/ApiConfig";
 import { useAuth } from "../contexts/AuthContext";
 
 export const fetchWithAuth = async (url: string, options = {}) => {
@@ -48,7 +49,7 @@ export const fetchWithAuthDirect = async (url: string, options = {}) => {
         const refreshToken = await SecureStore.getItemAsync("refreshToken");
         if (refreshToken) {
             try {
-                const refreshRes = await fetch(`${process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5000'}/api/auth/refresh-token`, {
+                const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -69,10 +70,22 @@ export const fetchWithAuthDirect = async (url: string, options = {}) => {
                             "Content-Type": "application/json",
                         },
                     });
+                } else {
+                    // Refresh token is invalid/expired, clear tokens
+                    console.log("Refresh token expired, clearing tokens");
+                    await SecureStore.deleteItemAsync("authToken");
+                    await SecureStore.deleteItemAsync("refreshToken");
+                    throw new Error("Authentication expired. Please login again.");
                 }
             } catch (error) {
                 console.error("Token refresh failed:", error);
+                // Clear tokens on any error
+                await SecureStore.deleteItemAsync("authToken");
+                await SecureStore.deleteItemAsync("refreshToken");
+                throw new Error("Authentication failed. Please login again.");
             }
+        } else {
+            throw new Error("No refresh token available. Please login again.");
         }
     }
 

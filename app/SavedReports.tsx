@@ -2,6 +2,7 @@ import ReportCard from "@/components/reports/ReportCard";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
 import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 
@@ -21,14 +22,57 @@ export default function SavedReports() {
     const fetchReports = async () => {
         try {
             const res = await fetchWithAuthDirect(`${API_ENDPOINTS.REPORTS}`);
+            
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    // Authentication error, redirect to login
+                    Alert.alert(
+                        "Session Expired",
+                        "Your session has expired. Please login again.",
+                        [
+                            {
+                                text: "OK",
+                                onPress: () => {
+                                    // Clear tokens and redirect to login
+                                    SecureStore.deleteItemAsync("authToken");
+                                    SecureStore.deleteItemAsync("refreshToken");
+                                    router.replace("/SignIn");
+                                }
+                            }
+                        ]
+                    );
+                    return;
+                }
+                throw new Error(`HTTP ${res.status}`);
+            }
+            
             const data = await res.json();
+            
+            if (!Array.isArray(data)) {
+                console.error("Invalid data format:", data);
+                throw new Error("Invalid response format");
+            }
+            
             const submitted = data.filter((r: Report) => !r.isDraft);
             const draft = data.filter((r: Report) => r.isDraft);
             setSubmittedReports(submitted);
             setDrafts(draft);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to fetch reports:", error);
-            Alert.alert("Error", "Failed to load reports. Please try again.");
+            if (error?.message?.includes("Authentication") || error?.message?.includes("login")) {
+                Alert.alert(
+                    "Authentication Error",
+                    "Please login again to continue.",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => router.replace("/SignIn")
+                        }
+                    ]
+                );
+            } else {
+                Alert.alert("Error", "Failed to load reports. Please try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -43,7 +87,9 @@ export default function SavedReports() {
             await fetchWithAuthDirect(API_ENDPOINTS.REPORTS_DELETE(id), {
                 method: "DELETE",
             });
-            fetchReports();
+            // Update local state instead of refetching all reports
+            setSubmittedReports(prev => prev.filter(report => report._id !== id));
+            setDrafts(prev => prev.filter(report => report._id !== id));
         } catch (error) {
             console.error("Error deleting report:", error);
             Alert.alert("Error", "Failed to delete report. Please try again.");

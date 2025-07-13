@@ -12,12 +12,14 @@ import {
 
 export default function VoiceNoteRecorder({
     onRecordingComplete,
+    initialValue = null,
 }: {
     onRecordingComplete?: (uri: string | null) => void;
+    initialValue?: string | null;
 }) {
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [sound, setSound] = useState<Audio.Sound | null>(null);
-    const [uri, setUri] = useState<string | null>(null);
+    const [uri, setUri] = useState<string | null>(initialValue);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
 
@@ -27,6 +29,11 @@ export default function VoiceNoteRecorder({
     const MAX_DURATION = 300;
     const [recordDuration, setRecordDuration] = useState(MAX_DURATION);
     const durationIntervalRef = useRef<number | null>(null);
+
+    // Update uri when initialValue changes
+    useEffect(() => {
+        setUri(initialValue);
+    }, [initialValue]);
 
     useEffect(() => {
         return sound
