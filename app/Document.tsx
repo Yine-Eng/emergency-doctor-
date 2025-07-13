@@ -8,7 +8,7 @@ import SummaryInput from "@/components/document/SummaryInput";
 import TagSelector from "@/components/document/TagSelector";
 import VoiceNoteRecorder from "@/components/document/VoiceNoteRecorder";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -66,7 +66,7 @@ export default function Document() {
         const fetchReport = async () => {
             if (!id) return;
             try {
-                const res = await fetchWithAuth(
+                const res = await fetchWithAuthDirect(
                     `${API_ENDPOINTS.REPORTS}/${id}`
                 );
                 const data = await res.json();
@@ -136,7 +136,7 @@ export default function Document() {
 
     const handleSubmitReport = async () => {
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthDirect(
                 `${API_ENDPOINTS.REPORTS}${id ? `/${id}` : ""}`,
                 {
                     method: id ? "PUT" : "POST",
@@ -170,7 +170,7 @@ export default function Document() {
 
     const handleSaveDraft = async () => {
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthDirect(
                 `${API_ENDPOINTS.REPORTS}${id ? `/${id}` : ""}`,
                 {
                     method: id ? "PUT" : "POST",
