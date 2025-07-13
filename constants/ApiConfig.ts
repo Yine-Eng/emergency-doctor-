@@ -8,6 +8,8 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/auth/login`,
   SIGNUP: `${API_BASE_URL}/api/auth/signup`,
   REFRESH_TOKEN: `${API_BASE_URL}/api/auth/refresh-token`,
+  REPORTS: `${API_BASE_URL}/api/reports`,
+  REPORTS_DELETE: (id: string) => `${API_BASE_URL}/api/reports/${id}`,
 };
 
 // Development helper
