@@ -1,6 +1,6 @@
 import ReportCard from "@/components/reports/ReportCard";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -20,7 +20,7 @@ export default function SavedReports() {
 
     const fetchReports = async () => {
         try {
-            const res = await fetchWithAuth(`${API_ENDPOINTS.REPORTS}`);
+            const res = await fetchWithAuthDirect(`${API_ENDPOINTS.REPORTS}`);
             const data = await res.json();
             const submitted = data.filter((r: Report) => !r.isDraft);
             const draft = data.filter((r: Report) => r.isDraft);
@@ -40,7 +40,7 @@ export default function SavedReports() {
 
     const handleDelete = async (id: string) => {
         try {
-            await fetchWithAuth(API_ENDPOINTS.REPORTS_DELETE(id), {
+            await fetchWithAuthDirect(API_ENDPOINTS.REPORTS_DELETE(id), {
                 method: "DELETE",
             });
             fetchReports();
