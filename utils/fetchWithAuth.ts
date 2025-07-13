@@ -1,8 +1,8 @@
 import * as SecureStore from "expo-secure-store";
-import { useAuth } from "../contexts/AuthContext";
+import { API_BASE_URL } from "../constants/ApiConfig";
 
 export const fetchWithAuth = async (url: string, options = {}) => {
-    const { authToken, refresh } = useAuth();
+    const authToken = await SecureStore.getItemAsync("authToken");
 
     let res = await fetch(url, {
         ...options,
@@ -14,17 +14,36 @@ export const fetchWithAuth = async (url: string, options = {}) => {
     });
 
     if (res.status === 401 || res.status === 403) {
-        await refresh();
-        const newToken = await SecureStore.getItemAsync("authToken");
+        // Try to refresh token
+        const refreshToken = await SecureStore.getItemAsync("refreshToken");
+        if (refreshToken) {
+            try {
+                const refreshRes = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ refreshToken }),
+                });
 
-        res = await fetch(url, {
-            ...options,
-            headers: {
-                ...(options as any).headers,
-                Authorization: `Bearer ${newToken}`,
-                "Content-Type": "application/json",
-            },
-        });
+                if (refreshRes.ok) {
+                    const { accessToken } = await refreshRes.json();
+                    await SecureStore.setItemAsync("authToken", accessToken);
+                    
+                    // Retry the original request with new token
+                    res = await fetch(url, {
+                        ...options,
+                        headers: {
+                            ...(options as any).headers,
+                            Authorization: `Bearer ${accessToken}`,
+                            "Content-Type": "application/json",
+                        },
+                    });
+                }
+            } catch (error) {
+                console.error("Token refresh failed:", error);
+            }
+        }
     }
 
     return res;
