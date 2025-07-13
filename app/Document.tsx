@@ -9,8 +9,9 @@ import TagSelector from "@/components/document/TagSelector";
 import VoiceNoteRecorder from "@/components/document/VoiceNoteRecorder";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
 import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import * as SecureStore from 'expo-secure-store';
+import { useCallback, useEffect, useState } from "react";
 import {
     Alert,
     BackHandler,
@@ -37,37 +38,121 @@ export default function Document() {
     const [originalReport, setOriginalReport] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Cache functions for unsaved changes
+    const getCacheKey = () => `unsaved_changes_${id || 'new'}`;
+    
+    const saveToCache = async () => {
+        const cacheData = {
+            summary,
+            selectedBodyParts,
+            location,
+            voiceNote,
+            mediaFiles,
+            severity,
+            selectedTags,
+            incidentDateTime: incidentDateTime.toISOString(),
+            timestamp: Date.now()
+        };
+        await SecureStore.setItemAsync(getCacheKey(), JSON.stringify(cacheData));
+        console.log("Saved to cache:", cacheData);
+    };
+    
+    const loadFromCache = async () => {
+        try {
+            const cached = await SecureStore.getItemAsync(getCacheKey());
+            if (cached) {
+                const data = JSON.parse(cached);
+                console.log("Loaded from cache:", data);
+                setSummary(data.summary || "");
+                setSelectedBodyParts(data.selectedBodyParts || []);
+                setLocation(data.location);
+                setVoiceNote(data.voiceNote);
+                setMediaFiles(data.mediaFiles || []);
+                setSeverity(data.severity);
+                setSelectedTags(data.selectedTags || []);
+                setIncidentDateTime(new Date(data.incidentDateTime));
+                return true;
+            }
+        } catch (error) {
+            console.error("Error loading from cache:", error);
+        }
+        return false;
+    };
+    
+    const clearCache = async () => {
+        await SecureStore.deleteItemAsync(getCacheKey());
+        console.log("Cache cleared");
+    };
+
     const hasChanges = () => {
-        if (!originalReport)
-            return (
-                summary ||
-                selectedBodyParts.length ||
-                voiceNote ||
-                mediaFiles.length ||
-                severity ||
-                selectedTags.length
-            );
+        console.log("=== Checking for changes ===");
+        console.log("Original report:", originalReport);
+        console.log("Current state:", {
+            summary,
+            selectedBodyParts,
+            location,
+            voiceNote,
+            mediaFiles,
+            severity,
+            selectedTags,
+            incidentDateTime: incidentDateTime.toISOString()
+        });
+        
+        if (!originalReport) {
+            const hasData = summary || selectedBodyParts.length || voiceNote || mediaFiles.length || severity || selectedTags.length;
+            console.log("No original report, has data:", hasData);
+            return hasData;
+        }
         
         // Handle both old and new field names for comparison
         const originalBodyParts = originalReport.bodyParts || originalReport.selectedBodyParts || [];
         const originalMedia = originalReport.media || originalReport.mediaUrls || [];
         const originalVoiceNote = originalReport.voiceNote || originalReport.voiceNoteUrl;
         
-        return (
-            summary !== originalReport.summary ||
-            JSON.stringify(selectedBodyParts) !== JSON.stringify(originalBodyParts) ||
-            JSON.stringify(location) !== JSON.stringify(originalReport.location) ||
-            voiceNote !== originalVoiceNote ||
-            JSON.stringify(mediaFiles) !== JSON.stringify(originalMedia) ||
-            severity !== originalReport.severity ||
-            JSON.stringify(selectedTags) !== JSON.stringify(originalReport.tags || []) ||
-            incidentDateTime.toISOString() !== new Date(originalReport.incidentDateTime).toISOString()
-        );
+        const changes = {
+            summary: summary !== originalReport.summary,
+            bodyParts: JSON.stringify(selectedBodyParts) !== JSON.stringify(originalBodyParts),
+            location: JSON.stringify(location) !== JSON.stringify(originalReport.location),
+            voiceNote: voiceNote !== originalVoiceNote,
+            media: JSON.stringify(mediaFiles) !== JSON.stringify(originalMedia),
+            severity: severity !== originalReport.severity,
+            tags: JSON.stringify(selectedTags) !== JSON.stringify(originalReport.tags || []),
+            dateTime: incidentDateTime.toISOString() !== new Date(originalReport.incidentDateTime).toISOString()
+        };
+        
+        const hasChanges = Object.values(changes).some(change => change);
+        console.log("Change detection:", changes);
+        console.log("Has changes:", hasChanges);
+        
+        return hasChanges;
     };
 
     useEffect(() => {
         const fetchReport = async () => {
-            if (!id) return;
+            if (!id) {
+                // For new reports, try to load from cache
+                const hasCached = await loadFromCache();
+                if (hasCached) {
+                    Alert.alert(
+                        "Unsaved Changes Found",
+                        "We found unsaved changes from your previous session. Would you like to continue editing?",
+                        [
+                            {
+                                text: "Start Fresh",
+                                style: "destructive",
+                                onPress: () => clearCache(),
+                            },
+                            {
+                                text: "Continue Editing",
+                                style: "default",
+                                onPress: () => {},
+                            },
+                        ]
+                    );
+                }
+                return;
+            }
+            
             setIsLoading(true);
             try {
                 console.log("Fetching report with ID:", id);
@@ -87,6 +172,7 @@ export default function Document() {
                 console.log("Report data:", data);
                 setOriginalReport(data);
                 setSummary(data.summary);
+                // Handle both old and new field names for backward compatibility
                 setSelectedBodyParts(data.bodyParts || data.selectedBodyParts || []);
                 setLocation(data.location);
                 setVoiceNote(data.voiceNote || data.voiceNoteUrl);
@@ -105,6 +191,7 @@ export default function Document() {
         const backHandler = BackHandler.addEventListener(
             "hardwareBackPress",
             () => {
+                console.log("Hardware back button pressed");
                 if (hasChanges()) {
                     Alert.alert(
                         "Unsaved Changes",
@@ -130,6 +217,84 @@ export default function Document() {
 
         return () => backHandler.remove();
     }, [id]);
+
+    // Save to cache when changes are made
+    useEffect(() => {
+        if (!isLoading && (summary || selectedBodyParts.length || voiceNote || mediaFiles.length || severity || selectedTags.length)) {
+            saveToCache();
+        }
+    }, [summary, selectedBodyParts, location, voiceNote, mediaFiles, severity, selectedTags, incidentDateTime, isLoading]);
+
+    // Handle navigation away from screen
+    useFocusEffect(
+        useCallback(() => {
+            const onBeforeRemove = (e: any) => {
+                console.log("Navigation away detected");
+                if (hasChanges()) {
+                    // Prevent default action
+                    e.preventDefault();
+                    
+                    Alert.alert(
+                        "Unsaved Changes",
+                        "You have unsaved changes. What would you like to do?",
+                        [
+                            {
+                                text: "Keep Editing",
+                                style: "cancel",
+                                onPress: () => {},
+                            },
+                            {
+                                text: "Save as Draft",
+                                style: "default",
+                                onPress: () => {
+                                    handleSaveDraft();
+                                },
+                            },
+                            {
+                                text: "Discard Changes",
+                                style: "destructive",
+                                onPress: () => {
+                                    router.back();
+                                },
+                            },
+                        ]
+                    );
+                }
+            };
+
+            // This will be called when the screen is about to lose focus
+            return () => {
+                console.log("Screen losing focus");
+                if (hasChanges()) {
+                    Alert.alert(
+                        "Unsaved Changes",
+                        "You have unsaved changes. What would you like to do?",
+                        [
+                            {
+                                text: "Keep Editing",
+                                style: "cancel",
+                                onPress: () => {},
+                            },
+                            {
+                                text: "Save as Draft",
+                                style: "default",
+                                onPress: () => {
+                                    handleSaveDraft();
+                                },
+                            },
+                            {
+                                text: "Discard Changes",
+                                style: "destructive",
+                                onPress: () => {
+                                    router.back();
+                                },
+                            },
+                        ]
+                    );
+                }
+            };
+        }, [summary, selectedBodyParts, location, voiceNote, mediaFiles, severity, selectedTags, incidentDateTime])
+    );
 
     const resetForm = () => {
         setSummary("");
@@ -164,6 +329,7 @@ export default function Document() {
 
             if (res.ok) {
                 console.log("Report submitted successfully.");
+                await clearCache(); // Clear cache after successful save
                 resetForm();
                 router.push("/SavedReports");
             } else {
@@ -198,6 +364,7 @@ export default function Document() {
 
             if (res.ok) {
                 console.log("Draft saved successfully.");
+                await clearCache(); // Clear cache after successful save
                 resetForm();
                 router.push("/SavedReports");
             } else {
