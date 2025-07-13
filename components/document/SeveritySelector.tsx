@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface SeverityOption {
@@ -21,6 +21,10 @@ export default function SeveritySelector({
     initialValue?: SeverityOption["value"] | null;
 }) {
     const [selected, setSelected] = useState(initialValue);
+
+    useEffect(() => {
+        setSelected(initialValue);
+    }, [initialValue]);
 
     const handleSelect = (value: SeverityOption["value"]) => {
         setSelected(value);
