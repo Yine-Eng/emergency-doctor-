@@ -14,7 +14,7 @@ const reportSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
-    selectedBodyParts: {
+    bodyParts: {
         type: [String],
         default: [],
     },
@@ -23,11 +23,11 @@ const reportSchema = new mongoose.Schema({
         lng: Number,
         address: String,
     },
-    voiceNoteUrl: {
+    voiceNote: {
         type: String,
         default: null,
     },
-    mediaUrls: {
+    media: {
         type: [String],
         default: [],
     },
