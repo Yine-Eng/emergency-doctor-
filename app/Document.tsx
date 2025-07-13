@@ -9,9 +9,9 @@ import TagSelector from "@/components/document/TagSelector";
 import VoiceNoteRecorder from "@/components/document/VoiceNoteRecorder";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
 import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Alert,
     BackHandler,
@@ -37,7 +37,6 @@ export default function Document() {
     const [incidentDateTime, setIncidentDateTime] = useState<Date>(new Date());
     const [originalReport, setOriginalReport] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isNavigatingAway, setIsNavigatingAway] = useState(false);
     const [isReturningToEdit, setIsReturningToEdit] = useState(false);
 
     // Cache functions for unsaved changes
@@ -236,7 +235,7 @@ export default function Document() {
             "hardwareBackPress",
             () => {
                 console.log("Hardware back button pressed");
-                if (hasChanges() && !isNavigatingAway) {
+                if (hasChanges()) {
                     Alert.alert(
                         "Unsaved Changes",
                         "You have unsaved changes. What would you like to do?",
@@ -250,7 +249,6 @@ export default function Document() {
                                 text: "Save as Draft",
                                 style: "default",
                                 onPress: () => {
-                                    setIsNavigatingAway(true);
                                     handleSaveDraft();
                                 },
                             },
@@ -258,7 +256,6 @@ export default function Document() {
                                 text: "Discard Changes",
                                 style: "destructive",
                                 onPress: () => {
-                                    setIsNavigatingAway(true);
                                     clearCache();
                                     resetForm();
                                     router.back();
@@ -274,6 +271,14 @@ export default function Document() {
 
         return () => backHandler.remove();
     }, [id, isReturningToEdit]);
+
+    // Reset navigation flags when component unmounts or when returning to edit
+    useEffect(() => {
+        return () => {
+            // Reset flags when component unmounts
+            setIsReturningToEdit(false);
+        };
+    }, []);
 
     // Save to cache when changes are made
     useEffect(() => {
@@ -300,64 +305,10 @@ export default function Document() {
         isLoading,
     ]);
 
-    // Handle navigation away from screen
-    useFocusEffect(
-        useCallback(() => {
-            
-            return () => {
-                console.log("Screen losing focus, isNavigatingAway:", isNavigatingAway);
-                if (hasChanges() && !isNavigatingAway) {
-                    Alert.alert(
-                        "Unsaved Changes",
-                        "You have unsaved changes. What would you like to do?",
-                        [
-                            {
-                                text: "Keep Editing",
-                                style: "cancel",
-                                onPress: () => {
-                                    setIsNavigatingAway(true);
-                                    setIsReturningToEdit(true);
-                                    setTimeout(() => {
-                                        router.push("/Document");
-                                        setIsNavigatingAway(false);
-                                    }, 100);
-                                },
-                            },
-                            {
-                                text: "Save as Draft",
-                                style: "default",
-                                onPress: () => {
-                                    setIsNavigatingAway(true);
-                                    handleSaveDraft();
-                                },
-                            },
-                            {
-                                text: "Discard Changes",
-                                style: "destructive",
-                                onPress: () => {
-                                    // User chose to discard, so we can clear cache and stay on current screen
-                                    setIsNavigatingAway(true);
-                                    clearCache();
-                                    resetForm();
-                                    setIsNavigatingAway(false);
-                                },
-                            },
-                        ]
-                    );
-                }
-            };
-        }, [
-            summary,
-            selectedBodyParts,
-            location,
-            voiceNote,
-            mediaFiles,
-            severity,
-            selectedTags,
-            incidentDateTime,
-            isNavigatingAway,
-        ])
-    );
+    // Note: Removed useFocusEffect to prevent navigation loops
+    // Navigation prevention is now handled only by BackHandler for hardware back button
+    // For programmatic navigation, users will need to use the hardware back button or
+    // the app's navigation controls which will trigger the BackHandler
 
     const handleSubmitReport = async () => {
         try {
@@ -384,16 +335,13 @@ export default function Document() {
                 console.log("Report submitted successfully.");
                 await clearCache(); // Clear cache after successful save
                 resetForm();
-                setIsNavigatingAway(false);
                 router.push("/SavedReports");
             } else {
                 const data = await res.json();
                 console.error("Submit failed:", data.message);
-                setIsNavigatingAway(false);
             }
         } catch (err) {
             console.error("Error submitting report:", err);
-            setIsNavigatingAway(false);
         }
     };
 
@@ -422,16 +370,13 @@ export default function Document() {
                 console.log("Draft saved successfully.");
                 await clearCache(); // Clear cache after successful save
                 resetForm();
-                setIsNavigatingAway(false);
                 router.push("/SavedReports");
             } else {
                 const data = await res.json();
                 console.error("Save draft failed:", data.message);
-                setIsNavigatingAway(false);
             }
         } catch (err) {
             console.error("Error saving draft:", err);
-            setIsNavigatingAway(false);
         }
     };
 
