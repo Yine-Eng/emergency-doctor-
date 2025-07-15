@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import adminRoutes from './routes/admin.js';
 import authRoutes from './routes/auth.js';
+import firstAidRoutes from './routes/firstAid.js';
 import protectedRoutes from './routes/protected.js';
 import reportRoutes from './routes/report.js';
 
@@ -23,5 +24,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', protectedRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/first-aid', firstAidRoutes);
 
 export default app;
