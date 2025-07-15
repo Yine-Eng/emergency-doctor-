@@ -1,6 +1,10 @@
+import { API_ENDPOINTS } from "@/constants/ApiConfig";
+import { fetchWithAuth } from "@/utils/fetchWithAuth";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+    Image,
+    Linking,
     ScrollView,
     StyleSheet,
     Text,
@@ -9,32 +13,48 @@ import {
     View,
 } from "react-native";
 
-const COMMON_CONDITIONS = [
-    "Burns",
-    "Cuts",
-    "Choking",
-    "Bleeding",
-    "Fracture",
-    "Allergic Reaction",
-    "Shock",
-];
-
 export default function FirstAid() {
     const [search, setSearch] = useState("");
-    const [selectedCondition, setSelectedCondition] = useState<string | null>(
+    const [conditions, setConditions] = useState<any[]>([]);
+    const [selectedCondition, setSelectedCondition] = useState<any | null>(
         null
     );
 
-    const handleSelect = (condition: string) => {
-        setSelectedCondition(condition);
+    const loadConditions = async () => {
+        try {
+            const res = await fetchWithAuth(
+                `${API_ENDPOINTS.FIRST_AID}?search=${encodeURIComponent(
+                    search
+                )}`
+            );
+            const data = await res.json();
+            setConditions(data);
+        } catch (err) {
+            console.error("Error fetching conditions", err);
+        }
     };
+
+    const handleSelect = async (condition: string) => {
+        try {
+            const res = await fetchWithAuth(
+                API_ENDPOINTS.FIRST_AID_CONDITION(condition)
+            );
+            const data = await res.json();
+            setSelectedCondition(data);
+        } catch (err) {
+            console.error("Error fetching guide:", err);
+        }
+    };
+
+    useEffect(() => {
+        loadConditions();
+    }, [search]);
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>First Aid Guide</Text>
             <Text style={styles.subtitle}>
-                Search for common emergencies and learn how to respond. Tap a
-                condition below to see guidance.
+                Search for common emergencies and learn how to respond.
             </Text>
 
             <TextInput
@@ -45,12 +65,10 @@ export default function FirstAid() {
             />
 
             <View style={styles.conditionList}>
-                {COMMON_CONDITIONS.filter((cond) =>
-                    cond.toLowerCase().includes(search.toLowerCase())
-                ).map((condition) => (
+                {conditions.map((cond) => (
                     <TouchableOpacity
-                        key={condition}
-                        onPress={() => handleSelect(condition)}
+                        key={cond._id}
+                        onPress={() => handleSelect(cond.condition)}
                         style={styles.conditionCard}
                     >
                         <Ionicons
@@ -58,19 +76,50 @@ export default function FirstAid() {
                             size={20}
                             color="#1E40AF"
                         />
-                        <Text style={styles.conditionText}>{condition}</Text>
+                        <Text style={styles.conditionText}>
+                            {cond.condition}
+                        </Text>
                     </TouchableOpacity>
                 ))}
             </View>
 
             {selectedCondition && (
                 <View style={styles.infoBox}>
-                    <Text style={styles.infoTitle}>{selectedCondition}</Text>
-                    <Text style={styles.infoDesc}>
-                        This is where step-by-step first aid instructions for{" "}
-                        {selectedCondition.toLowerCase()} will appear. You can
-                        enhance this with real data or media later.
+                    <Text style={styles.infoTitle}>
+                        {selectedCondition.condition}
                     </Text>
+
+                    {selectedCondition.imageUrl && (
+                        <Image
+                            source={{ uri: selectedCondition.imageUrl }}
+                            style={styles.image}
+                            resizeMode="cover"
+                        />
+                    )}
+
+                    {selectedCondition.steps?.map(
+                        (step: string, index: number) => (
+                            <Text key={index} style={styles.infoDesc}>
+                                {index + 1}. {step}
+                            </Text>
+                        )
+                    )}
+
+                    {selectedCondition.source && (
+                        <TouchableOpacity
+                            onPress={() =>
+                                Linking.openURL(selectedCondition.source).catch(
+                                    (err) =>
+                                        console.error(
+                                            "Failed to open link",
+                                            err
+                                        )
+                                )
+                            }
+                        >
+                            <Text style={styles.link}>View Source ↗</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
         </ScrollView>
@@ -144,5 +193,17 @@ const styles = StyleSheet.create({
     infoDesc: {
         fontSize: 14,
         color: "#475569",
+    },
+    image: {
+        width: "100%",
+        height: 160,
+        borderRadius: 8,
+        marginBottom: 12,
+    },
+    link: {
+        color: "#1D4ED8",
+        marginTop: 12,
+        fontWeight: "600",
+        fontSize: 14,
     },
 });
