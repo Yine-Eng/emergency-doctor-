@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
-import { fetchWithAuth } from "@/utils/fetchWithAuth";
+import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import {
@@ -22,7 +22,7 @@ export default function FirstAid() {
 
     const loadConditions = async () => {
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthDirect(
                 `${API_ENDPOINTS.FIRST_AID}?search=${encodeURIComponent(
                     search
                 )}`
@@ -36,7 +36,7 @@ export default function FirstAid() {
 
     const handleSelect = async (condition: string) => {
         try {
-            const res = await fetchWithAuth(
+            const res = await fetchWithAuthDirect(
                 API_ENDPOINTS.FIRST_AID_CONDITION(condition)
             );
             const data = await res.json();
