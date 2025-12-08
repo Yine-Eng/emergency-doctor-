@@ -10,6 +10,8 @@ export const API_ENDPOINTS = {
   REFRESH_TOKEN: `${API_BASE_URL}/api/auth/refresh-token`,
   REPORTS: `${API_BASE_URL}/api/reports`,
   REPORTS_DELETE: (id: string) => `${API_BASE_URL}/api/reports/${id}`,
+  FIRST_AID: `${API_BASE_URL}/api/first-aid`,
+  FIRST_AID_CONDITION: (condition: string) => `${API_BASE_URL}/api/first-aid/${encodeURIComponent(condition)}`,
 };
 
 // Development helper
