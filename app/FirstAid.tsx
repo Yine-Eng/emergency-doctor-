@@ -1,3 +1,4 @@
+import SearchBar from "@/components/SearchBar";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
 import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +9,6 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
@@ -63,23 +63,12 @@ export default function FirstAid() {
                 Search for common emergencies and learn how to respond.
             </Text>
 
-            <View style={styles.searchRow}>
-                <TextInput
-                    placeholder="Search first aid..."
-                    style={styles.searchInput}
-                    value={query}
-                    onChangeText={setQuery}
-                    onSubmitEditing={handleSearch}
-                    returnKeyType="search"
-                />
-                <TouchableOpacity
-                    style={styles.searchBtn}
-                    onPress={handleSearch}
-                    accessibilityLabel="Search"
-                >
-                    <Ionicons name="search" size={20} color="#fff" />
-                </TouchableOpacity>
-            </View>
+            <SearchBar
+                value={query}
+                onChangeText={setQuery}
+                onSubmit={handleSearch}
+                placeholder="Search first aid..."
+            />
 
             <View style={styles.conditionList}>
                 {conditions.map((cond) => (

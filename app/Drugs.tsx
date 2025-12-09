@@ -1,15 +1,8 @@
+import SearchBar from "@/components/SearchBar";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useEffect, useState } from "react";
-import {
-    Linking,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from "react-native";
+import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 
 interface DrugResult {
     name: string;
@@ -69,22 +62,12 @@ export default function DrugsChecker() {
                 This is not a substitute for professional medical advice.
             </Text>
 
-            <View style={styles.searchRow}>
-                <TextInput
-                    style={styles.input}
-                    value={query}
-                    placeholder="Search drug name..."
-                    onChangeText={setQuery}
-                    onSubmitEditing={handleSearch}
-                    returnKeyType="search"
-                />
-                <TouchableOpacity
-                    style={styles.searchBtn}
-                    onPress={handleSearch}
-                >
-                    <Ionicons name="search" size={20} color="#fff" />
-                </TouchableOpacity>
-            </View>
+            <SearchBar
+                value={query}
+                onChangeText={setQuery}
+                onSubmit={handleSearch}
+                placeholder="Search drug name..."
+            />
 
             {results.map((result, index) => (
                 <View
@@ -95,10 +78,10 @@ export default function DrugsChecker() {
                     ]}
                 >
                     <View style={styles.iconContainer}>
-                        <Ionicons 
-                            name="medical" 
-                            size={40} 
-                            color={result.approved ? "#22C55E" : "#EF4444"} 
+                        <Ionicons
+                            name="medical"
+                            size={40}
+                            color={result.approved ? "#22C55E" : "#EF4444"}
                         />
                     </View>
                     <View style={styles.texts}>
@@ -195,8 +178,8 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         marginRight: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent: "center",
+        alignItems: "center",
     },
     texts: {
         flex: 1,
