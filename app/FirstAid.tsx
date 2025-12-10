@@ -1,3 +1,4 @@
+import SearchBar from "@/components/SearchBar";
 import { API_ENDPOINTS } from "@/constants/ApiConfig";
 import { fetchWithAuthDirect } from "@/utils/fetchWithAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,24 +9,22 @@ import {
     ScrollView,
     StyleSheet,
     Text,
-    TextInput,
     TouchableOpacity,
     View,
 } from "react-native";
 
 export default function FirstAid() {
     const [search, setSearch] = useState("");
+    const [query, setQuery] = useState("");
     const [conditions, setConditions] = useState<any[]>([]);
     const [selectedCondition, setSelectedCondition] = useState<any | null>(
         null
     );
 
-    const loadConditions = async () => {
+    const loadConditions = async (term = "") => {
         try {
             const res = await fetchWithAuthDirect(
-                `${API_ENDPOINTS.FIRST_AID}?search=${encodeURIComponent(
-                    search
-                )}`
+                `${API_ENDPOINTS.FIRST_AID}?search=${encodeURIComponent(term)}`
             );
             const data = await res.json();
             setConditions(data);
@@ -46,9 +45,16 @@ export default function FirstAid() {
         }
     };
 
+    // Load popular/default conditions on mount
     useEffect(() => {
-        loadConditions();
-    }, [search]);
+        loadConditions("");
+    }, []);
+
+    const handleSearch = () => {
+        const term = query.trim();
+        setSearch(term);
+        loadConditions(term);
+    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
@@ -57,11 +63,11 @@ export default function FirstAid() {
                 Search for common emergencies and learn how to respond.
             </Text>
 
-            <TextInput
+            <SearchBar
+                value={query}
+                onChangeText={setQuery}
+                onSubmit={handleSearch}
                 placeholder="Search first aid..."
-                style={styles.searchInput}
-                value={search}
-                onChangeText={setSearch}
             />
 
             <View style={styles.conditionList}>
@@ -143,15 +149,31 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     searchInput: {
+        flex: 1,
         backgroundColor: "#fff",
         padding: 12,
         borderRadius: 8,
-        marginBottom: 20,
+        fontSize: 16,
+        borderColor: "#E2E8F0",
+        borderWidth: 1,
         shadowColor: "#000",
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
         elevation: 2,
+    },
+    searchRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    searchBtn: {
+        marginLeft: 8,
+        backgroundColor: "#1E40AF",
+        padding: 12,
+        borderRadius: 8,
+        justifyContent: "center",
+        alignItems: "center",
     },
     conditionList: {
         flexDirection: "row",
