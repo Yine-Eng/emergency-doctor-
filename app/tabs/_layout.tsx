@@ -1,10 +1,8 @@
-import SafeScreenLayout from '@/components/SafeScreenLayout';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
     return (
-        <SafeScreenLayout>
             <Tabs
                 screenOptions={({ route }: { route: { name: string } }) => ({
                     headerShown: false,
@@ -29,6 +27,5 @@ export default function TabLayout() {
                 <Tabs.Screen name="Discover" options={{ title: 'Discover' }} />
                 <Tabs.Screen name="Profile" options={{ title: 'Profile' }} />
             </Tabs>
-        </SafeScreenLayout>
     );
 }
